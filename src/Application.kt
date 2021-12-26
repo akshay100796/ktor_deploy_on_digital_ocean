@@ -34,6 +34,16 @@ fun Application.module(testing: Boolean = false) {
             call.respond(HttpStatusCode.OK,"Hello $email, We mail you Secret Key, Please Delete It with in 1 Second ")
         }
 
+        get("/data"){
+            val map = HashMap<String,String>()
+            map["id"] = 100.toString()
+            map["name"] = "Akshay Developer"
+            map["email"] = "developer@Codexdroid.com"
+            map["mobile"] = "+91 3344886655"
+
+            call.respond(HttpStatusCode.OK,map)
+        }
+
         get("/"){
             val map = HashMap<String,String>()
             Random.nextInt()
