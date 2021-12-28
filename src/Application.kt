@@ -21,31 +21,22 @@ private var database: Database? = null
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
-/**
-username = doadmin
-password = spKfK9ykMfsDvZOJ
-host = private-test-db-do-user-10480409-0.b.db.ondigitalocean.com
-port = 25060
-database = defaultdb
-sslmode = REQUIRED
-**/
-
 
 //Create table for inserting data into database
 object PersonTable : Table<Nothing>(tableName = "person"){          // This class define to send data to database // 'person' is tablename define/created in  phpmyadmin
     val id = int("id").primaryKey()
     val name = varchar("name")
     val email = varchar("email")
-    val mobile = long("mobile")
+    val mobile = varchar("mobile")
 }
 
 fun getDatabase() : Database? {
     database = if(database == null){
         Database.connect(
-            url = "jdbc:mysql://private-test-db-do-user-10480409-0.b.db.ondigitalocean.com",
+            url = "jdbc:mysql://test-db-do-user-10480409-0.b.db.ondigitalocean.com",
             driver = "com.mysql.cj.jdbc.Driver",
             user = "doadmin",
-            password = "spKfK9ykMfsDvZOJ")
+            password = "9AvhLIGrecrpdHfl")
     }else database
     return database
 }
