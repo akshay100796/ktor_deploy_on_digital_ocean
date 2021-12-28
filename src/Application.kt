@@ -60,6 +60,10 @@ fun Application.module(testing: Boolean = false) {
 
             call.respond(UserData(HttpStatusCode.OK.value,"Here's Your Data",map))
         }
+
+        get("/info"){
+            call.respond("No Information available for now, pls keep visiting")
+        }
     }
 }
 
