@@ -1,5 +1,6 @@
 package com.codexdroid
 
+import com.google.gson.Gson
 import io.ktor.application.*
 import io.ktor.response.*
 import io.ktor.request.*
@@ -8,13 +9,55 @@ import io.ktor.http.*
 import io.ktor.gson.*
 import io.ktor.features.*
 import kotlinx.serialization.Serializable
+import org.ktorm.database.Database
+import org.ktorm.dsl.insert
+import org.ktorm.schema.Table
+import org.ktorm.schema.int
+import org.ktorm.schema.long
+import org.ktorm.schema.varchar
 import kotlin.random.Random
+
+private var database: Database? = null
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
+/**
+username = doadmin
+password = spKfK9ykMfsDvZOJ
+host = private-test-db-do-user-10480409-0.b.db.ondigitalocean.com
+port = 25060
+database = defaultdb
+sslmode = REQUIRED
+**/
+
+
+//Create table for inserting data into database
+object PersonTable : Table<Nothing>(tableName = "person"){          // This class define to send data to database // 'person' is tablename define/created in  phpmyadmin
+    val id = int("id").primaryKey()
+    val name = varchar("name")
+    val email = varchar("email")
+    val mobile = long("mobile")
+}
+
+fun getDatabase() : Database? {
+    database = if(database == null){
+        Database.connect(
+            url = "jdbc:mysql://private-test-db-do-user-10480409-0.b.db.ondigitalocean.com",
+            driver = "com.mysql.cj.jdbc.Driver",
+            user = "doadmin",
+            password = "spKfK9ykMfsDvZOJ")
+    }else database
+    return database
+}
+
 
 @Serializable
-data class UserData(var status: Int, var message: String, var map:HashMap<String,String>)
+data class Person(var id:Int,var name: String,var email:String,var mobile:String)
+
+
+
+@Serializable
+data class UserData(var status: Int, var message: String, var person : Person)
 
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
@@ -34,18 +77,29 @@ fun Application.module(testing: Boolean = false) {
             call.respond(HttpStatusCode.OK,"Hello $email, We mail you Secret Key, Please Delete It with in 1 Second ")
         }
 
-        get("/data"){
-            val map = HashMap<String,String>()
-            map["id"] = 100.toString()
-            map["name"] = "Akshay Developer"
-            map["email"] = "developer@Codexdroid.com"
-            map["mobile"] = "+91 3344886655"
+        post("/data"){
+            val person = call.receive<Person>()
 
-            call.respond(HttpStatusCode.OK,map)
+            println("${Gson().toJson(call.request)}")
+
+            val affectedRows = getDatabase()?.insert(PersonTable){
+                set(PersonTable.id,person.id)
+                set(PersonTable.name,person.name)
+                set(PersonTable.email,person.email)
+                set(PersonTable.mobile,person.mobile)
+            }
+
+            if(affectedRows == 1){
+                call.respond("Data inserted")
+            }else{
+                call.respond("Data Could not insert")
+            }
+
+
+            call.respond(HttpStatusCode.OK,person)
         }
 
         get("/"){
-            val map = HashMap<String,String>()
             Random.nextInt()
             var fname = ""
             var lname = ""
@@ -54,11 +108,8 @@ fun Application.module(testing: Boolean = false) {
                 lname += Random.nextInt(97,97+26).toChar().toString()
             }
 
-            map["name"] = "$fname $lname"
-            map["email"] = "${fname}@codexdroid.com"
-            map["mobile"] = Random.nextLong(1111111111,9999999999).toString()
-
-            call.respond(UserData(HttpStatusCode.OK.value,"Here's Your Data",map))
+            val person = Person(Random.nextInt(100,999),"$fname $lname","${fname}@codexdroid.com",Random.nextLong(1111111111,9999999999).toString())
+            call.respond(UserData(HttpStatusCode.OK.value,"Here's Your Data",person))
         }
 
         get("/info"){
