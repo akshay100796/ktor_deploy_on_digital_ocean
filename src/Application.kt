@@ -80,7 +80,7 @@ fun Application.module(testing: Boolean = false) {
         post("/data"){
             val person = call.receive<Person>()
 
-            println("${Gson().toJson(call.request)}")
+            println("====> ${call.request.authorization()}")
 
             val affectedRows = getDatabase()?.insert(PersonTable){
                 set(PersonTable.id,person.id)
