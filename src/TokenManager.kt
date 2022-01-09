@@ -14,7 +14,10 @@ class TokenManager(val config : HoconApplicationConfig) {
     private val audience = config.property("audience").getString()
     private val secret = config.property("secret").getString()
     private val issuer = config.property("issuer").getString()
-    private val tokenExpiration = Date(System.currentTimeMillis().plus(5000L))   //Token expired after every 5 sec
+    private val tokenExpiration = Date(System.currentTimeMillis().plus(5000L))
+    //Token Expiration Exaplanation : if you generate 10 tokens after generating single one with in 5 sec all tokens will be same
+    // if you want to generate different token in each request then reduce token expiration time in milisec. ex 100
+    //Token expired after every 5 sec
 
 
     //We should be compulsory pass here to generate new token base on unit key

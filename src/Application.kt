@@ -21,12 +21,7 @@ import org.ktorm.schema.varchar
 
 /**** ********************** PROTOTYPES ******************
  *
- *      RUN Without TOKEN
- *      Add Token and again run Properly
- *      Follow steps how to host ktor project on digital ocean
- *
- *      again perform CRUD base operation on Digital Ocean server with out token
- *      add token and run on live server
+ *      Add Database in Digital Ocean
  *
  * *******/
 
@@ -93,7 +88,7 @@ fun Application.module() {
     routing {
 
         get("/welcome") {
-            call.respond("Welcome to codexdroid.com")
+            call.respond("Welcome to codexdroid.com Again")
         }
         registerUser()
         loginUser()
@@ -173,21 +168,28 @@ private fun Routing.registerUser() {
 }
 
 private fun Routing.loginUser(){
+
+    var token = ""
+
     post("/login"){
         val request = call.receive<PersonRequest>()
         val person = checkUserExistsOrNot(request)
+
         if( person != null){
-            if(request.mobile == person.mobile){
-                val affectedRows = getDatabase()?.update(PersonTable){
-                    val token = tokenManager.generateToken(request.mobile)
-                    set(PersonTable.token,token)
-                }
-                if(affectedRows!! > 0){
-                    call.respond(CommonResponse(HttpStatusCode.Found.value,"User Login Successfully",null))
-                }else{
-                    call.respond(CommonResponse(HttpStatusCode.NotFound.value,"Invalid Mobile entered",null))
+            val affectedRows = getDatabase()?.update(PersonTable) {
+                token = tokenManager.generateToken(request.mobile)
+                set(PersonTable.token,"Bearer $token")
+                where {
+                    (PersonTable.id eq request.id) and (PersonTable.mobile eq request.mobile)
                 }
             }
+            if(affectedRows!! > 0){
+                call.respond(CommonResponse(HttpStatusCode.Found.value,"User Login Successfully \n New Token : Bearer $token",null))
+            }else{
+                call.respond(CommonResponse(HttpStatusCode.NotFound.value,"Login Fail, Check Mobile and ID",null))
+            }
+        }else {
+            call.respond(CommonResponse(HttpStatusCode.NotFound.value,"Mobile ${request.mobile} Not registered with us",null))
         }
     }
 }
@@ -198,6 +200,7 @@ private fun Routing.displayUsers() {
 
     get("/view") {
         val clientToken = call.request.authorization().toString()
+        println("Client Token $clientToken === ${getServerToken(clientToken)} ")
         if (clientToken == getServerToken(clientToken)?.token) {
             personList.clear()
             val query = getDatabase()?.from(PersonTable)?.select()
@@ -208,9 +211,7 @@ private fun Routing.displayUsers() {
                         row[PersonTable.name]!!,
                         row[PersonTable.email]!!,
                         row[PersonTable.mobile]!!,
-                        row[PersonTable.token]!!,
-                    )
-                )
+                        row[PersonTable.token]!!))
             }
             if (personList.isNotEmpty()) {
                 call.respond(CommonResponse(HttpStatusCode.OK.value, "All Data Retrieved Successfully", personList))
@@ -228,9 +229,11 @@ private fun Routing.displaySingleUser(){
     get("/view/{id}"){
 
         val clientToken = call.request.authorization().toString()
+
         if (clientToken == getServerToken(clientToken)?.token) {
+
             val id = call.parameters["id"]?.toInt()
-            val person = getDatabase()?.from(PersonTable)?.select()?.where{ PersonTable.id eq id!!
+            val person = getDatabase()?.from(PersonTable)?.select()?.where{ (PersonTable.id eq id!!) and ( PersonTable.id eq id)
             }?.map {
                 PersonRespond(
                     it[PersonTable.id]!!,
@@ -244,7 +247,7 @@ private fun Routing.displaySingleUser(){
             if(person != null){
                 call.respond(OneRowResponse(HttpStatusCode.Found.value,"We Found Your Data", person))
             }else{
-                call.respond(OneRowResponse(HttpStatusCode.NotFound.value,"We Cannot Found Your Data", null))
+                call.respond(OneRowResponse(HttpStatusCode.NotFound.value,"We Cannot Found Your Data, Match Id and token", null))
             }
         }else{
             call.respond(CommonResponse(HttpStatusCode.NotFound.value,"Please Provide Token to get access",null))
