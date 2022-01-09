@@ -102,11 +102,10 @@ fun Application.module() {
 private fun getDatabase(): Database? {
     database = if (database == null) {
         Database.connect(
-            url = "jdbc:mysql://localhost/test_db",
+            url = "jdbc:db-test-cluster-do-user-10480409-0.b.db.ondigitalocean.com.com:25060/defaultdb",
             driver = "com.mysql.cj.jdbc.Driver",
-            user = "root",
-            password = ""
-
+            user = "doadmin",  //same like root
+            password = "Up11D8ZXHVjKBn77"
         )
     } else database
     return database
